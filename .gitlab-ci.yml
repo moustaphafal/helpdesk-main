@@ -1,0 +1,36 @@
+stages:
+  - test
+  - deploy
+before_script:
+  - PATH=/apache-maven-3.6.0/bin:$PATH
+test-all:
+  stage: test
+  tags: [maven]
+  except:
+    - main
+  script:
+    - mvn clean install
+
+test-unit:
+  stage: test
+  tags: [maven]
+  only:
+    - main
+  script:
+    - mvn clean package
+    - cp target/helpdesk-final.jar helpdesk-final.jar
+  artifacts:
+    name: helpdesk
+    expire_in: 2 week
+    paths:
+      - helpdesk-final.jar
+
+deploy:
+  stage: deploy
+  tags: [maven]
+  needs: [test-unit]
+  only:
+    - main
+  script:
+    - scp helpdesk-final.jar pmg@ssh-pmg.alwaysdata.net:/home/pmg/
+    - echo "Deploy success"
